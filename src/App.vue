@@ -3,14 +3,16 @@
     <v-app-bar app color="primary" dark>
       <v-toolbar-title> Weather App </v-toolbar-title>
       <v-spacer>
-        <v-text-field label="Search by location" class="mt-7 ml-16 mr-11" solo light></v-text-field>
+        <v-text-field label="Search by location" class="mt-7 ml-16 mr-11" solo light dense 
+          @keydown.enter="getWeather"
+        ></v-text-field>
       </v-spacer>
       <v-btn
-        href="#"
+        href=""
         target="_blank"
         text
       >
-        <span class="mr-2">Link to Github</span>
+        <span>Link to Github</span>
         <v-icon>mdi-open-in-new</v-icon>
       </v-btn>
     </v-app-bar>
@@ -20,11 +22,11 @@
         <v-list-item> <!-- City, date, description -->
           <v-list-item-content class="mt-2 ml-16">
             <v-list-item-title class="headline text-no-wrap">
-              Bogota
+              {{cityName}}, {{countryCode}}
             </v-list-item-title>
 
             <v-list-item-subtitle>
-              Date, Description
+              {{new Date().toLocaleString()}}, description
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -36,14 +38,14 @@
               <v-list-item>
                 <v-list-item-content >
                   <v-list-item-title class="display-4">
-                    56&deg;
+                    {{currentTemp}}&deg;
                     </v-list-item-title>
                   <v-list-item-subtitle class="mt-3 subtitle-1">
-                    Feels like 
+                    Feels like {{feelTemp}}&deg;
                   </v-list-item-subtitle>
                   <v-list-item-subtitle class="mt-3 subtitle-1">
-                    Min: 50&deg;
-                    / Max: 60&deg;
+                    Min: {{minTemp}}&deg;
+                    / Max: {{maxTemp}}&deg;
                   </v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
@@ -63,7 +65,8 @@
             </v-icon>
           </v-list-item-icon>
           <v-list-item-subtitle class="subtitle-1"> 
-            12 km/h
+            {{windSpeed}} 
+            {{usingMetricUnits ? 'km/h' : 'mph'}}
           </v-list-item-subtitle>
         </v-list-item>
         
@@ -74,7 +77,7 @@
             </v-icon>
           </v-list-item-icon>
           <v-list-item-subtitle class="subtitle-1">
-            65%
+            {{humidity}}%
           </v-list-item-subtitle>
         </v-list-item>
         
@@ -93,19 +96,52 @@
 <script>
 export default {
   name: 'App',
+  data() {
+    return {
+      apiKey: 'ad5c13b60ff4ac2c13b2879d0cbd2c1e',
+      usingMetricUnits: false,
+      weatherData: null,
+      cityName: null,
+      countryCode: null,
+      description: null,
+      currentTemp: null,
+      feelTemp: null,
+      minTemp: null,
+      maxTemp: null,
+      windSpeed: null,
+      humidity: null,
+    }
+  },
+  methods: {
+    async getWeather() {
+      let response = await fetch(
+        'http://api.openweathermap.org/data/2.5/weather?q=Ringwood,uk&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
+        {mode: 'cors'}
+      )
+      this.weatherData = await response.json(); 
+      
+      this.cityName = this.weatherData.name;
+      this.countryCode = this.weatherData.sys.country
+      this.description = this.weatherData.weather[0].description;
+      this.currentTemp = Math.round(this.weatherData.main.temp);
+      this.feelTemp = Math.round(this.weatherData.main.feels_like)
+      this.minTemp = Math.round(this.weatherData.main.temp_min);
+      this.maxTemp = Math.round(this.weatherData.main.temp_max);
+      this.windSpeed = Math.round(this.weatherData.wind.speed);
+      this.humidity = Math.round(this.weatherData.main.humidity);
 
+      console.log(this.weatherData)
+    }
+  },
   components: {
 
-},
-
-  data: () => ({
-    //
-  }),
+  },
+  created() {
+    this.getWeather();
+  }
 };
 </script>
 
 <style scoped>
-.test {
-  text-align: center;
-}
+
 </style>
