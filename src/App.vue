@@ -22,7 +22,7 @@
         <v-list-item> <!-- City, date, description -->
           <v-list-item-content class="mt-2 ml-16">
             <v-list-item-title class="headline text-no-wrap">
-              {{cityName}}, {{countryCode}}
+              {{cityName}}, {{cityState ? cityState + ', ' : ''}} {{countryCode}}
             </v-list-item-title>
 
             <v-list-item-subtitle>
@@ -53,7 +53,7 @@
             </v-col>
 
             <v-col cols="3">
-              <v-img :src=iconSRC>{{weatherData.weather[0].icon}}</v-img>
+              <v-img :src=iconSRC> </v-img>
             </v-col>
           </v-row>
         </v-card-text>
@@ -102,6 +102,7 @@ export default {
       usingMetricUnits: false,
       weatherData: null,
       cityName: null,
+      cityState: null,
       countryCode: null,
       description: null,
       currentTemp: null,
@@ -110,44 +111,48 @@ export default {
       maxTemp: null,
       windSpeed: null,
       humidity: null,
-      iconSRC: null
+      iconSRC: 'https://openweathermap.org/img/wn/01d@2x.png'
     }
   },
   methods: {
     async getWeather(cityInput) {
-      let cityName = cityInput.split(',')[0].toLowerCase();
-      let cityState = cityInput.split(',')[1].slice(1).toLowerCase();
+      try {
+        let name = cityInput.split(',')[0].toLowerCase();
+        let state = cityInput.split(',')[1].slice(1).toLowerCase();
 
-      let cityList = await fetch(`./city.list.copy.json`, {mode: 'cors'});
-      let cityListJSON = await cityList.json();
-      let cityID = cityListJSON.findIndex(
-        city => 
-          city.name.toLowerCase() === cityName 
-          && city.state.toLowerCase() === cityState
+        let cityList = await fetch(`./city.list.copy.json`, {mode: 'cors'});
+        let cityListJSON = await cityList.json();
+        let cityID = cityListJSON.findIndex(
+          city => 
+            city.name.toLowerCase() === name 
+            && city.state.toLowerCase() === state
+          )
+        
+        let response = await fetch(
+          'http://api.openweathermap.org/data/2.5/weather?id=' 
+          + cityListJSON[cityID].id
+          + '&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
+          {mode: 'cors'}
         )
-      
-      let response = await fetch(
-        'http://api.openweathermap.org/data/2.5/weather?id=' 
-        + cityListJSON[cityID].id
-        + '&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
-        {mode: 'cors'}
-      )
-      this.weatherData = await response.json(); 
-      
-      this.cityName = this.weatherData.name;
-      this.countryCode = this.weatherData.sys.country
-      this.description = this.weatherData.weather[0].description;
-      this.currentTemp = Math.round(this.weatherData.main.temp);
-      this.feelTemp = Math.round(this.weatherData.main.feels_like)
-      this.minTemp = Math.round(this.weatherData.main.temp_min);
-      this.maxTemp = Math.round(this.weatherData.main.temp_max);
-      this.windSpeed = Math.round(this.weatherData.wind.speed);
-      this.humidity = Math.round(this.weatherData.main.humidity);
-      this.iconSRC = 'https://openweathermap.org/img/wn/'
-        + this.weatherData.weather[0].icon
-        + '@2x.png';
-
-      console.log(this.weatherData)
+        this.weatherData = await response.json(); 
+        
+        this.cityName = cityInput.split(',')[0];
+        this.cityState = cityInput.split(',')[1].slice(1);
+        this.countryCode = this.weatherData.sys.country
+        this.description = this.weatherData.weather[0].description;
+        this.currentTemp = Math.round(this.weatherData.main.temp);
+        this.feelTemp = Math.round(this.weatherData.main.feels_like)
+        this.minTemp = Math.round(this.weatherData.main.temp_min);
+        this.maxTemp = Math.round(this.weatherData.main.temp_max);
+        this.windSpeed = Math.round(this.weatherData.wind.speed);
+        this.humidity = Math.round(this.weatherData.main.humidity);
+        this.iconSRC = 'https://openweathermap.org/img/wn/'
+          + this.weatherData.weather[0].icon
+          + '@2x.png';
+      } catch (err) {
+        alert('Cannot find the city you searched for. Please try another location.')
+        this.getWeather("Hartford, CT")
+      }
       
     }
   },
@@ -155,7 +160,7 @@ export default {
 
   },
   created() {
-    this.getWeather("East Hartford, CT");
+    this.getWeather("Manchester, CT");
   }
 };
 </script>
