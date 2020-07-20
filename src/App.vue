@@ -53,7 +53,7 @@
             </v-col>
 
             <v-col cols="3">
-              <v-img src="https://openweathermap.org/img/wn/10n@2x.png"></v-img>
+              <v-img :src=iconSRC>{{weatherData.weather[0].icon}}</v-img>
             </v-col>
           </v-row>
         </v-card-text>
@@ -110,6 +110,7 @@ export default {
       maxTemp: null,
       windSpeed: null,
       humidity: null,
+      iconSRC: null
     }
   },
   methods: {
@@ -142,6 +143,9 @@ export default {
       this.maxTemp = Math.round(this.weatherData.main.temp_max);
       this.windSpeed = Math.round(this.weatherData.wind.speed);
       this.humidity = Math.round(this.weatherData.main.humidity);
+      this.iconSRC = 'https://openweathermap.org/img/wn/'
+        + this.weatherData.weather[0].icon
+        + '@2x.png';
 
       console.log(this.weatherData)
       
@@ -151,7 +155,7 @@ export default {
 
   },
   created() {
-    this.getWeather("Estherville, IA");
+    this.getWeather("East Hartford, CT");
   }
 };
 </script>
