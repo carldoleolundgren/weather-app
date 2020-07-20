@@ -26,7 +26,7 @@
             </v-list-item-title>
 
             <v-list-item-subtitle>
-              {{new Date().toLocaleString()}}, description
+              {{new Date().toLocaleString()}}, {{description}}
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -113,9 +113,22 @@ export default {
     }
   },
   methods: {
-    async getWeather() {
+    async getWeather(cityInput) {
+      let cityName = cityInput.split(',')[0].toLowerCase();
+      let cityState = cityInput.split(',')[1].slice(1).toLowerCase();
+
+      let cityList = await fetch(`./city.list.copy.json`, {mode: 'cors'});
+      let cityListJSON = await cityList.json();
+      let cityID = cityListJSON.findIndex(
+        city => 
+          city.name.toLowerCase() === cityName 
+          && city.state.toLowerCase() === cityState
+        )
+      
       let response = await fetch(
-        'http://api.openweathermap.org/data/2.5/weather?q=Ringwood,uk&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
+        'http://api.openweathermap.org/data/2.5/weather?id=' 
+        + cityListJSON[cityID].id
+        + '&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
         {mode: 'cors'}
       )
       this.weatherData = await response.json(); 
@@ -131,13 +144,14 @@ export default {
       this.humidity = Math.round(this.weatherData.main.humidity);
 
       console.log(this.weatherData)
+      
     }
   },
   components: {
 
   },
   created() {
-    this.getWeather();
+    this.getWeather("Estherville, IA");
   }
 };
 </script>
