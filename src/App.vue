@@ -39,14 +39,14 @@
               <v-list-item>
                 <v-list-item-content >
                   <v-list-item-title class="display-4">
-                    {{currentTemp}}&deg;
+                    {{usingMetricUnits ? currentTempCelsius : currentTemp}}&deg;
                     </v-list-item-title>
                   <v-list-item-subtitle class="mt-3 subtitle-1">
-                    Feels like {{feelTemp}}&deg;
+                    Feels like {{usingMetricUnits ? feelTempCelsius : feelTemp}}&deg;
                   </v-list-item-subtitle>
                   <v-list-item-subtitle class="mt-3 subtitle-1">
-                    Min: {{minTemp}}&deg;
-                    / Max: {{maxTemp}}&deg;
+                    Min: {{usingMetricUnits ? minTempCelsius : minTemp}}&deg;
+                    / Max: {{usingMetricUnits ? maxTempCelsius : maxTemp}}&deg;
                   </v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
@@ -54,7 +54,7 @@
             </v-col>
 
             <v-col cols="3">
-              <v-img :src=iconSRC> </v-img>
+              <v-img :src=iconSRC class="filter"> </v-img>
             </v-col>
           </v-row>
         </v-card-text>
@@ -66,7 +66,7 @@
             </v-icon>
           </v-list-item-icon>
           <v-list-item-subtitle class="subtitle-1"> 
-            {{windSpeed}} 
+            {{usingMetricUnits ? windSpeedMetric : windSpeed}} 
             {{usingMetricUnits ? 'km/h' : 'mph'}}
           </v-list-item-subtitle>
         </v-list-item>
@@ -85,8 +85,8 @@
         <v-divider></v-divider>
         
         <v-card-actions>
-          <v-btn text class="mx-auto" @click="isCelsius = true">&deg;C</v-btn>
-          <v-btn text class="mx-auto" @click="isCelsius = false">&deg;F</v-btn>
+          <v-btn text class="mx-auto" @click="usingMetricUnits = true; storeUnits();">&deg;C</v-btn>
+          <v-btn text class="mx-auto" @click="usingMetricUnits = false; storeUnits();">&deg;F</v-btn>
         </v-card-actions>
         
       </v-card>
@@ -116,11 +116,28 @@ export default {
       iconSRC: 'https://openweathermap.org/img/wn/01d@2x.png'
     }
   },
+  computed: {
+    currentTempCelsius() {
+      return Math.round((this.currentTemp - 32) * (5/9));
+    },
+    feelTempCelsius() {
+      return Math.round((this.feelTemp - 32) * (5/9));      
+    },
+    minTempCelsius() {
+      return Math.round((this.minTemp - 32) * (5/9));      
+    },
+    maxTempCelsius() {
+      return Math.round((this.maxTemp - 32) * (5/9));      
+    },
+    windSpeedMetric() {
+      return Math.round(this.windSpeed * 1.609);
+    }
+  },
   methods: {
     async getWeather(input) {
       this.cityInput = null;
       this.cityState = null;
-      
+
       try {
         let name = input.split(',')[0].toLowerCase();
         let stateOrCountry = null;
@@ -176,16 +193,24 @@ export default {
           + '@2x.png';
       } catch (err) {
         alert('Cannot find the city you searched for. Please try another location.')
-        this.getWeather("Hartford, CT")
+        this.getWeather("Cambridge, MA")
       } 
+    },
+    storeUnits() {
+      localStorage.setItem('storedUnits', JSON.stringify(this.usingMetricUnits))
     }
   },
   created() {
-    this.getWeather("Manchester");
+    if (localStorage.getItem('storedUnits')) {
+      this.usingMetricUnits = JSON.parse(localStorage.getItem('storedUnits'))
+    }
+    this.getWeather("Cambridge, MA");
   }
 };
 </script>
 
 <style scoped>
-
+.filter {
+  filter: drop-shadow(0px 0px 5px rgb(134, 134, 134));
+}
 </style>
