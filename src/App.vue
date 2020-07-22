@@ -4,7 +4,8 @@
       <v-toolbar-title> Weather App </v-toolbar-title>
       <v-spacer>
         <v-text-field label="Search by location" class="mt-7 ml-16 mr-11" solo light dense 
-          @keydown.enter="getWeather"
+          v-model="cityInput"
+          @keydown.enter="getWeather(cityInput)"
         ></v-text-field>
       </v-spacer>
       <v-btn
@@ -99,6 +100,7 @@ export default {
   data() {
     return {
       apiKey: 'ad5c13b60ff4ac2c13b2879d0cbd2c1e',
+      cityInput: null,
       usingMetricUnits: false,
       weatherData: null,
       cityName: null,
@@ -115,30 +117,53 @@ export default {
     }
   },
   methods: {
-    async getWeather(cityInput) {
+    async getWeather(input) {
+      this.cityInput = null;
+      this.cityState = null;
+      
       try {
-        let name = cityInput.split(',')[0].toLowerCase();
-        let state = cityInput.split(',')[1].slice(1).toLowerCase();
+        let name = input.split(',')[0].toLowerCase();
+        let stateOrCountry = null;
+        if (input.indexOf(',') !== -1) {
+          stateOrCountry = input.split(',')[1].slice(1).toLowerCase();
+        }
 
-        let cityList = await fetch(`./city.list.copy.json`, {mode: 'cors'});
+        let cityList = await fetch(`./city.list.json`, {mode: 'cors'});
         let cityListJSON = await cityList.json();
-        let cityID = cityListJSON.findIndex(
-          city => 
-            city.name.toLowerCase() === name 
-            && city.state.toLowerCase() === state
-          )
+        let cityIndex;
         
+        let USLocation = (cityListJSON.findIndex(city => city.state.toLowerCase() === stateOrCountry) !== -1) 
+          ? true : false;
+
+        let InternationalLocation = (cityListJSON.findIndex(city => city.country.toLowerCase() === stateOrCountry) !== -1)
+          ? true : false;
+
+        if (stateOrCountry === null) {
+          cityIndex = cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+          )
+        } else if (USLocation) {
+          cityIndex = cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+              && city.state.toLowerCase() === stateOrCountry
+          )
+          this.cityState = cityListJSON[cityIndex].state;
+        } else if (InternationalLocation) {
+          cityIndex = cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+              && city.country.toLowerCase() === stateOrCountry
+          )
+        }
+
         let response = await fetch(
           'http://api.openweathermap.org/data/2.5/weather?id=' 
-          + cityListJSON[cityID].id
+          + cityListJSON[cityIndex].id
           + '&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
           {mode: 'cors'}
         )
         this.weatherData = await response.json(); 
-        
-        this.cityName = cityInput.split(',')[0];
-        this.cityState = cityInput.split(',')[1].slice(1);
-        this.countryCode = this.weatherData.sys.country
+        this.countryCode = cityListJSON[cityIndex].country;        
+        this.cityName = cityListJSON[cityIndex].name;
         this.description = this.weatherData.weather[0].description;
         this.currentTemp = Math.round(this.weatherData.main.temp);
         this.feelTemp = Math.round(this.weatherData.main.feels_like)
@@ -152,15 +177,11 @@ export default {
       } catch (err) {
         alert('Cannot find the city you searched for. Please try another location.')
         this.getWeather("Hartford, CT")
-      }
-      
+      } 
     }
   },
-  components: {
-
-  },
   created() {
-    this.getWeather("Manchester, CT");
+    this.getWeather("Manchester");
   }
 };
 </script>
