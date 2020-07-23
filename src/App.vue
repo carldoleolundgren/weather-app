@@ -28,7 +28,7 @@
         <v-list-item> <!-- City, date, description -->
           <v-list-item-content class="mt-2 ml-16">
             <v-list-item-title class="headline text-no-wrap">
-              {{cityName}}, {{cityState ? cityState + ', ' : ''}} {{countryCode}}
+              {{cityName}}, {{cityState ?  `${cityState}, ` : ''}} {{countryCode}}
             </v-list-item-title>
 
             <v-list-item-subtitle>
@@ -67,7 +67,7 @@
           </v-row>
         </v-card-text>
 
-        <v-list-item class="ml-16"> <!-- wind -->
+        <v-list-item class="ml-16">
           <v-list-item-icon>
             <v-icon>
               mdi-weather-windy
@@ -79,7 +79,7 @@
           </v-list-item-subtitle>
         </v-list-item>
         
-        <v-list-item class="ml-16"> <!-- humidity -->
+        <v-list-item class="ml-16">
           <v-list-item-icon>
             <v-icon>
               mdi-water-percent
@@ -145,7 +145,6 @@ export default {
   methods: {
     async getWeather(input) {
       this.cityInput = null;
-      this.cityState = null;
 
       try {
         let name = input.split(',')[0].toLowerCase();
@@ -179,12 +178,11 @@ export default {
               city.name.toLowerCase() === name 
               && city.country.toLowerCase() === stateOrCountry
           )
+          this.cityState = null;
         }
 
         let weatherResponse = await fetch(
-          'http://api.openweathermap.org/data/2.5/weather?id=' 
-          + cityListJSON[cityIndex].id
-          + '&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
+          `http://api.openweathermap.org/data/2.5/weather?id=${cityListJSON[cityIndex].id}&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial`,
           {mode: 'cors'}
         )
         this.weatherData = await weatherResponse.json(); 
@@ -198,15 +196,10 @@ export default {
         this.maxTemp = Math.round(this.weatherData.main.temp_max);
         this.windSpeed = Math.round(this.weatherData.wind.speed);
         this.humidity = Math.round(this.weatherData.main.humidity);
-        this.iconSRC = 'https://openweathermap.org/img/wn/'
-          + this.weatherData.weather[0].icon
-          + '@2x.png';
+        this.iconSRC = `https://openweathermap.org/img/wn/${this.weatherData.weather[0].icon}@2x.png`;
 
         let timezoneResponse = await fetch(
-          'https://api.timezonedb.com/v2.1/get-time-zone?key=0U0Q18WRJST6&format=json&by=position&lng='
-          + this.weatherData.coord.lon
-          + '&lat='
-          + this.weatherData.coord.lat, 
+          `https://api.timezonedb.com/v2.1/get-time-zone?key=0U0Q18WRJST6&format=json&by=position&lng=${this.weatherData.coord.lon}&lat=${this.weatherData.coord.lat}`,
           {mode: 'cors'}
         )
         let timezoneData = await timezoneResponse.json()
@@ -215,7 +208,7 @@ export default {
           { timeZone: timezoneData.zoneName, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
         );
       } catch (err) {
-        //alert('Cannot find the city you searched for. Please try another location.')
+        alert('The city you searched for is not in the database. Please try another location.')
         this.getWeather("Cambridge, MA")
       } 
     },
