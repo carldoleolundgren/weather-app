@@ -182,7 +182,7 @@ export default {
         }
 
         let weatherResponse = await fetch(
-          `http://api.openweathermap.org/data/2.5/weather?id=${cityListJSON[cityIndex].id}&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial`,
+          `https://api.openweathermap.org/data/2.5/weather?id=${cityListJSON[cityIndex].id}&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial`,
           {mode: 'cors'}
         )
         this.weatherData = await weatherResponse.json(); 
