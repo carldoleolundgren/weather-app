@@ -3,13 +3,18 @@
     <v-app-bar app color="primary" dark>
       <v-toolbar-title> Weather App </v-toolbar-title>
       <v-spacer>
-        <v-text-field label="Search by location" class="mt-7 ml-16 mr-11" solo light dense 
+        <v-text-field 
+          label="Search by location" 
+          class="mt-7 ml-16 mr-11" 
+          solo 
+          light 
+          dense 
           v-model="cityInput"
           @keydown.enter="getWeather(cityInput)"
         ></v-text-field>
       </v-spacer>
       <v-btn
-        href=""
+        href="https://github.com/carldoleolundgren/weather-app"
         target="_blank"
         text
       >
@@ -27,7 +32,10 @@
             </v-list-item-title>
 
             <v-list-item-subtitle>
-              {{new Date().toLocaleString()}}, {{description}}
+              {{localTime}}
+            </v-list-item-subtitle>
+            <v-list-item-subtitle>
+              {{description}}
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -59,7 +67,7 @@
           </v-row>
         </v-card-text>
 
-        <v-list-item class="ml-16">
+        <v-list-item class="ml-16"> <!-- wind -->
           <v-list-item-icon>
             <v-icon>
               mdi-weather-windy
@@ -67,11 +75,11 @@
           </v-list-item-icon>
           <v-list-item-subtitle class="subtitle-1"> 
             {{usingMetricUnits ? windSpeedMetric : windSpeed}} 
-            {{usingMetricUnits ? 'km/h' : 'mph'}}
+            {{usingMetricUnits ? 'm/s' : 'mph'}}
           </v-list-item-subtitle>
         </v-list-item>
         
-        <v-list-item class="ml-16">
+        <v-list-item class="ml-16"> <!-- humidity -->
           <v-list-item-icon>
             <v-icon>
               mdi-water-percent
@@ -113,7 +121,8 @@ export default {
       maxTemp: null,
       windSpeed: null,
       humidity: null,
-      iconSRC: 'https://openweathermap.org/img/wn/01d@2x.png'
+      iconSRC: 'https://openweathermap.org/img/wn/01d@2x.png',
+      localTime: null,
     }
   },
   computed: {
@@ -130,7 +139,7 @@ export default {
       return Math.round((this.maxTemp - 32) * (5/9));      
     },
     windSpeedMetric() {
-      return Math.round(this.windSpeed * 1.609);
+      return Math.round(this.windSpeed / 2.237);
     }
   },
   methods: {
@@ -172,16 +181,17 @@ export default {
           )
         }
 
-        let response = await fetch(
+        let weatherResponse = await fetch(
           'http://api.openweathermap.org/data/2.5/weather?id=' 
           + cityListJSON[cityIndex].id
           + '&APPID=ad5c13b60ff4ac2c13b2879d0cbd2c1e&units=imperial',
           {mode: 'cors'}
         )
-        this.weatherData = await response.json(); 
+        this.weatherData = await weatherResponse.json(); 
         this.countryCode = cityListJSON[cityIndex].country;        
         this.cityName = cityListJSON[cityIndex].name;
-        this.description = this.weatherData.weather[0].description;
+        this.description = this.weatherData.weather[0].description[0].toUpperCase()
+                            + this.weatherData.weather[0].description.slice(1);
         this.currentTemp = Math.round(this.weatherData.main.temp);
         this.feelTemp = Math.round(this.weatherData.main.feels_like)
         this.minTemp = Math.round(this.weatherData.main.temp_min);
@@ -191,8 +201,21 @@ export default {
         this.iconSRC = 'https://openweathermap.org/img/wn/'
           + this.weatherData.weather[0].icon
           + '@2x.png';
+
+        let timezoneResponse = await fetch(
+          'https://api.timezonedb.com/v2.1/get-time-zone?key=0U0Q18WRJST6&format=json&by=position&lng='
+          + this.weatherData.coord.lon
+          + '&lat='
+          + this.weatherData.coord.lat, 
+          {mode: 'cors'}
+        )
+        let timezoneData = await timezoneResponse.json()
+
+        this.localTime = new Date().toLocaleString('en-US', 
+          { timeZone: timezoneData.zoneName, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+        );
       } catch (err) {
-        alert('Cannot find the city you searched for. Please try another location.')
+        //alert('Cannot find the city you searched for. Please try another location.')
         this.getWeather("Cambridge, MA")
       } 
     },
