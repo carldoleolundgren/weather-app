@@ -163,10 +163,30 @@ export default {
         let InternationalLocation = (cityListJSON.findIndex(city => city.country.toLowerCase() === stateOrCountry) !== -1)
           ? true : false;
 
+        console.log('US? ' + USLocation)
+        console.log('Intl? ' + InternationalLocation)
+
         if (stateOrCountry === null) {
           cityIndex = cityListJSON.findIndex(city => 
-              city.name.toLowerCase() === name 
+              city.name.toLowerCase().replace(/á/gi, 'a') === name.replace(/á/gi, 'a') 
           )
+          this.cityState = null;
+        } else if (USLocation && InternationalLocation) {
+          if (cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+              && city.state.toLowerCase() === stateOrCountry) !== -1
+          ) {
+            cityIndex = cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+              && city.state.toLowerCase() === stateOrCountry)
+          } 
+          if (cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+              && city.country.toLowerCase() === stateOrCountry) !== -1) {
+            cityIndex = cityListJSON.findIndex(city => 
+              city.name.toLowerCase() === name 
+              && city.country.toLowerCase() === stateOrCountry)
+          }
         } else if (USLocation) {
           cityIndex = cityListJSON.findIndex(city => 
               city.name.toLowerCase() === name 
